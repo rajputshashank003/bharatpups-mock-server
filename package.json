@@ -1,0 +1,22 @@
+{
+  "name": "bharatpups_mock_server",
+  "version": "1.0.0",
+  "Description": "",
+  "main": "index.js",
+  "scripts": {
+    "start:both": "concurrently \"npm run start\" \"cd client && npm run dev\"",
+    "start": "cd backend && npm start",
+    "prebuild": "npm run install-backend",
+    "install-backend": "cd backend && npm install",
+    "build": "cd "
+  },
+  "author": "",
+  "license": "ISC",
+  "engines": {
+    "node": ">= 18"
+  },
+  "dependencies": {
+    "concurrently": "^9.1.2",
+    "dotenv": "^16.4.5"
+  }
+}
