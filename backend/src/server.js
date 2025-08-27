@@ -14,18 +14,42 @@ app.use(cors({ credentials: true, origin: '*' }));
 
 dbConnect();
 
-app.use("/api/mockdata/dogs",
-    (req, res) => {
-        res.send({ dogs, breeds });
+app.get('/api/dog',
+    async (req, res) => {
+        try {
+            const { breed, search } = req.query;
+            let filter = {};
+
+            if (breed) {
+                filter.breed = breed;
+            }
+
+            if (search) {
+                filter.$or = [
+                    { name: { $regex: search, $options: 'i' } },
+                    { breed: { $regex: search, $options: 'i' } }
+                ];
+            }
+
+            const dogs = await DogModel.find(filter);
+            const breeds = await DogModel.distinct('breed');
+
+            res.send({ dogs, breeds });
+        } catch (err) {
+            res.status(404).json({ message: err.message });
+        }
     }
 );
 
-app.get("*", async (req, res) => {
+app.get('*',
+    async (req, res) => {
     try {
-        const data = await DogModel.find({});
-        res.send(data);
+        const breeds = await DogModel.distinct('breed');
+        res.send(breeds);
     } catch (err) {
-        res.send('error in api');
+        res.status(500).json({
+            message: err.message
+        });
     }
 });
 
