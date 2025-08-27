@@ -5,6 +5,7 @@ import express from "express";
 import cors from "cors";
 import { breeds, dogs } from "./data.js";
 import { DogModel } from '../models/dog.modal.js';
+import { ReviewModel } from '../models/reviews.modal.js';
 import { dbConnect } from '../config/database.config.js';
 
 const app = express();
@@ -41,6 +42,25 @@ app.get('/api/dog',
     }
 );
 
+app.get("/api/dog/id/:id",
+    async (req, res) => {
+        try {
+            const { id } = req.params;
+            console.log(id);
+
+            const dog = await DogModel.findById(id).lean();
+            const reviews = await ReviewModel.find({ dog: id });
+
+            if (!dog || !reviews) {
+                return res.status(404).json({ message: "Data not found!" });
+            }
+            res.send({ dog, reviews });
+        } catch (err ) {
+            res.status(404).send('Not found!' + err?.message);
+        }
+    }
+);
+
 app.get('*',
     async (req, res) => {
     try {
@@ -53,9 +73,9 @@ app.get('*',
     }
 });
 
-const port = 8080
+const port = 8008
 
 app.listen(port, () => {
-    console.log("Server Connected... 8080!");
-});
+    console.log("Server Connected... 8008!");
+}); 
 export default app;
