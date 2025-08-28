@@ -15,32 +15,41 @@ app.use(cors({ credentials: true, origin: '*' }));
 
 dbConnect();
 
+let catched_dogs = null;
+let is_data_updated = true;
+
 app.get('/api/dog',
     async (req, res) => {
         try {
             const { breed, search } = req.query;
-            let filter = {};
+            if (!catched_dogs || is_data_updated) {
+                const dogsFromDb = await DogModel.find({});
+                const breedsFromDb = await DogModel.distinct('breed');
 
+                catched_dogs = { dogs: dogsFromDb, breeds: breedsFromDb };
+                is_data_updated = false;
+            }
+
+            let { dogs, breeds } = catched_dogs;
             if (breed) {
-                filter.breed = breed;
+                dogs = dogs.filter(d => d.breed === breed);
             }
 
             if (search) {
-                filter.$or = [
-                    { name: { $regex: search, $options: 'i' } },
-                    { breed: { $regex: search, $options: 'i' } }
-                ];
+                const regex = new RegExp(search, "i");
+                dogs = dogs.filter(d => regex.test(d.name) || regex.test(d.breed));
             }
-
-            const dogs = await DogModel.find(filter);
-            const breeds = await DogModel.distinct('breed');
-
             res.send({ dogs, breeds });
         } catch (err) {
             res.status(404).json({ message: err.message });
         }
     }
 );
+
+app.get('/api/dog/updated', (req, res) => {
+    is_data_updated = true;
+    res.status(200).send('Updation done');
+});
 
 app.get("/api/dog/id/:id",
     async (req, res) => {
