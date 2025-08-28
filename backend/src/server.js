@@ -3,7 +3,6 @@ dotenv.config();
 
 import express from "express";
 import cors from "cors";
-import { breeds, dogs } from "./data.js";
 import { DogModel } from '../models/dog.modal.js';
 import { ReviewModel } from '../models/reviews.modal.js';
 import { dbConnect } from '../config/database.config.js';
@@ -55,7 +54,6 @@ app.get("/api/dog/id/:id",
     async (req, res) => {
         try {
             const { id } = req.params;
-            console.log(id);
 
             const dog = await DogModel.findById(id).lean();
             const reviews = await ReviewModel.find({ dog: id });
@@ -64,7 +62,7 @@ app.get("/api/dog/id/:id",
                 return res.status(404).json({ message: "Data not found!" });
             }
             res.send({ dog, reviews });
-        } catch (err ) {
+        } catch (err) {
             res.status(404).send('Not found!' + err?.message);
         }
     }
@@ -72,19 +70,27 @@ app.get("/api/dog/id/:id",
 
 app.get('*',
     async (req, res) => {
-    try {
-        const breeds = await DogModel.distinct('breed');
-        res.send(breeds);
-    } catch (err) {
-        res.status(500).json({
-            message: err.message
-        });
+        try {
+            if (!catched_dogs || is_data_updated) {
+                const dogsFromDb = await DogModel.find({});
+                const breedsFromDb = await DogModel.distinct('breed');
+                catched_dogs = { dogs: dogsFromDb, breeds: breedsFromDb };
+                is_data_updated = false;
+            }
+
+            const { breeds } = catched_dogs;
+            res.send(breeds);
+        } catch (err) {
+            res.status(404).json({
+                message: err.message
+            });
+        }
     }
-});
+);
 
 const port = 8008
 
 app.listen(port, () => {
     console.log("Server Connected... 8008!");
-}); 
+});
 export default app;
